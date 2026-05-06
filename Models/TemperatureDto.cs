@@ -5,6 +5,6 @@ namespace irrigation_system.Models
     public class TemperatureDto
     {
         [JsonPropertyName("temperature")]
-        public string Temperature { get; set; } = string.Empty;
+        public string? Temperature { get; set; }
     }
 }

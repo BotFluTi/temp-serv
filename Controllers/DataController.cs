@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using irrigation_system.Models;
+using System.Text;
 
 namespace irrigation_system.Controllers
 {
@@ -8,19 +9,69 @@ namespace irrigation_system.Controllers
     public class DataController : ControllerBase
     {
         [HttpPost]
-        public IActionResult Post([FromBody] TemperatureDto data)
+        public async Task<IActionResult> Post()
         {
-            TemperatureStore.LastTemperature = data.Temperature;
+            string raw;
 
-            Console.WriteLine($"Received temperature: {data.Temperature}");
+            try
+            {
+                using var reader = new StreamReader(
+                    Request.Body,
+                    Encoding.UTF8,
+                    detectEncodingFromByteOrderMarks: false,
+                    bufferSize: 1024,
+                    leaveOpen: false
+                );
 
-            return Ok(new { status = "received" });
+                raw = await reader.ReadToEndAsync();
+            }
+            catch (Microsoft.AspNetCore.Server.Kestrel.Core.BadHttpRequestException ex)
+            {
+                Console.WriteLine("BAD HTTP REQUEST:");
+                Console.WriteLine(ex.Message);
+
+                return BadRequest(new
+                {
+                    error = "Invalid or incomplete HTTP request body",
+                    details = ex.Message
+                });
+            }
+            catch (IOException ex)
+            {
+                Console.WriteLine("IO ERROR WHILE READING BODY:");
+                Console.WriteLine(ex.Message);
+
+                return BadRequest(new
+                {
+                    error = "Could not read request body",
+                    details = ex.Message
+                });
+            }
+
+            Console.WriteLine("RAW:");
+            Console.WriteLine(raw);
+
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                return BadRequest(new { error = "Empty body" });
+            }
+
+            TemperatureStore.LastTemperature = raw;
+
+            return Ok(new
+            {
+                status = "received",
+                body = raw
+            });
         }
 
         [HttpGet]
         public IActionResult Get()
         {
-            return Ok(new { temperature = TemperatureStore.LastTemperature });
+            return Ok(new
+            {
+                temperature = TemperatureStore.LastTemperature
+            });
         }
     }
 }
