@@ -6,8 +6,20 @@
     <h1 class="display-4">Temperature Monitor</h1>
 
     <h2>
-        Current temperature: @ViewBag.Temperature
+        Current temperature: @ViewBag.Temperature °C
     </h2>
+
+    <h3>
+        Read at:
+        @if (ViewBag.ReadAt == null)
+        {
+            <span>No date yet</span>
+        }
+        else
+        {
+            <span>@(((DateTime)ViewBag.ReadAt).ToString("dd.MM.yyyy HH:mm:ss"))</span>
+        }
+    </h3>
 
     <button onclick="location.reload()">Refresh</button>
 </div>
