@@ -24,6 +24,63 @@
     <button onclick="location.reload()">Refresh</button>
 </div>
 
+<hr />
+
+<div style="max-width: 900px; margin: 30px auto;">
+    <h2 class="text-center">Temperature History</h2>
+    <canvas id="temperatureChart"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
-    setTimeout(() => location.reload(), 3000);
+    async function loadTemperatureChart() {
+        const response = await fetch('/api/data/history');
+        const readings = await response.json();
+
+        const orderedReadings = readings.reverse();
+
+        const labels = orderedReadings.map(item => {
+            const date = new Date(item.readAt);
+            return date.toLocaleTimeString();
+        });
+
+        const temperatures = orderedReadings.map(item => item.temperature);
+
+        const ctx = document.getElementById('temperatureChart');
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Temperature °C',
+                    data: temperatures,
+                    tension: 0.3,
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Temperature °C'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Reading time'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    loadTemperatureChart();
+
+    setTimeout(() => location.reload(), 5000);
 </script>
