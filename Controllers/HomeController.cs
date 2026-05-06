@@ -8,6 +8,8 @@ namespace irrigation_system.Controllers
         public IActionResult Index()
         {
             ViewBag.Temperature = TemperatureStore.LastTemperature;
+            ViewBag.ReadAt = TemperatureStore.LastReadAt;
+
             return View();
         }
     }

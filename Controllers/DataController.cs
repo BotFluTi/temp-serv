@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using irrigation_system.Models;
 using System.Text;
+using System.Text.Json;
 
 namespace irrigation_system.Controllers
 {
@@ -56,12 +57,31 @@ namespace irrigation_system.Controllers
                 return BadRequest(new { error = "Empty body" });
             }
 
-            TemperatureStore.LastTemperature = raw;
+            string temperatureValue = raw;
+
+            try
+            {
+                var dto = JsonSerializer.Deserialize<TemperatureDto>(raw);
+
+                if (!string.IsNullOrWhiteSpace(dto?.Temperature))
+                {
+                    temperatureValue = dto.Temperature;
+                }
+            }
+            catch
+            {
+                // Dacă nu este JSON valid, păstrăm raw-ul ca fallback.
+                temperatureValue = raw;
+            }
+
+            TemperatureStore.LastTemperature = temperatureValue;
+            TemperatureStore.LastReadAt = DateTime.Now;
 
             return Ok(new
             {
                 status = "received",
-                body = raw
+                temperature = TemperatureStore.LastTemperature,
+                readAt = TemperatureStore.LastReadAt
             });
         }
 
@@ -70,7 +90,8 @@ namespace irrigation_system.Controllers
         {
             return Ok(new
             {
-                temperature = TemperatureStore.LastTemperature
+                temperature = TemperatureStore.LastTemperature,
+                readAt = TemperatureStore.LastReadAt
             });
         }
     }
