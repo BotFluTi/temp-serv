@@ -2,7 +2,6 @@
 using irrigation_system.Models;
 using irrigation_system.Data;
 using System.Globalization;
-using System.Text.Json;
 
 namespace irrigation_system.Controllers
 {
@@ -38,26 +37,45 @@ namespace irrigation_system.Controllers
                 });
             }
 
+            if (request.ReadAtUnix <= 0)
+            {
+                return BadRequest(new
+                {
+                    error = "Reading timestamp from board is required",
+                    received = request.ReadAtUnix
+                });
+            }
+
+            DateTime readAtFromBoard = DateTimeOffset
+                .FromUnixTimeSeconds(request.ReadAtUnix)
+                .LocalDateTime;
+
             var reading = new TemperatureReading
             {
                 Temperature = temperatureValue,
-                ReadAt = DateTime.Now
+                ReadAt = readAtFromBoard
             };
 
             _context.TemperatureReadings.Add(reading);
             await _context.SaveChangesAsync();
 
-            TemperatureStore.LastTemperature = temperatureValue.ToString("0.0", CultureInfo.InvariantCulture);
+            TemperatureStore.LastTemperature =
+                temperatureValue.ToString("0.0", CultureInfo.InvariantCulture);
+
             TemperatureStore.LastReadAt = reading.ReadAt;
 
+            Console.WriteLine("INSERT TemperatureReading:");
             Console.WriteLine($"Temperature: {reading.Temperature}");
-            Console.WriteLine($"ReadAt: {reading.ReadAt:dd.MM.yyyy HH:mm:ss}");
+            Console.WriteLine($"ReadAt from board: {reading.ReadAt:dd.MM.yyyy HH:mm:ss}");
+            Console.WriteLine($"ReadAt text from board: {request.ReadAt}");
 
             return Ok(new
             {
                 status = "received",
                 temperature = reading.Temperature,
-                readAt = reading.ReadAt
+                readAt = reading.ReadAt,
+                readAtUnix = request.ReadAtUnix,
+                readAtFromBoard = request.ReadAt
             });
         }
 
