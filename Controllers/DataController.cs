@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System.Text.Json.Serialization;
 using irrigation_system.Models;
 
 namespace irrigation_system.Controllers
@@ -8,12 +7,6 @@ namespace irrigation_system.Controllers
     [Route("api/data")]
     public class DataController : ControllerBase
     {
-        public class TemperatureDto
-        {
-            [JsonPropertyName("temperature")]
-            public string Temperature { get; set; } = string.Empty;
-        }
-
         [HttpPost]
         public IActionResult Post([FromBody] TemperatureDto data)
         {
